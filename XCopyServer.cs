@@ -38,7 +38,7 @@ namespace XCopyWrapper
 
                 if (File.Exists(path))
                 {
-                    Console.WriteLine("\x1b[35m\x1b[1m[INFO]\x1b[0m Copying file \x1b[45m\x1b[97m{0}\x1b[0m", path);
+                    AnsiConsole.WriteLine("\x1b[35;1m[INFO]\x1b[0m Copying file \x1b[45;97m{0}\x1b[0m", path);
                     string additionalFlags = "";
                     if(new FileInfo(path).Length > 1e8)
                     {
@@ -51,7 +51,7 @@ namespace XCopyWrapper
                 }
                 else if (Directory.Exists(path))
                 {
-                    Console.WriteLine("\x1b[35m\x1b[1m[INFO]\x1b[0m Copying directory \x1b[45m\x1b[97m{0}\x1b[0m recursively", path);
+                    AnsiConsole.WriteLine("\x1b[35;1m[INFO]\x1b[0m Copying directory \x1b[45;97m{0}\x1b[0m recursively", path);
                     startInfo.Arguments = string.Format("/C xcopy /s/e/v/h/i/f {0} {1}", path, BuildTargetPath(path));
                 }
 
@@ -68,12 +68,12 @@ namespace XCopyWrapper
                         5 => "Disk write error",
                         _ => string.Format("Error Code {0}", process.ExitCode),
                     };
-                    Console.WriteLine("\x1b[31m\x1b[1m[ERROR]\x1b[0m Error copying {0}: {1}", path, errReason);
+                    AnsiConsole.WriteLine("\x1b[31;1m[ERROR]\x1b[0m Error copying {0}: {1}", path, errReason);
                 }
             }
             else
             {
-                Console.WriteLine("\x1b[31m[ERROR]\x1b[0m {0} not found or no longer exists.", path);
+                AnsiConsole.WriteLine("\x1b[31m[ERROR]\x1b[0m {0} not found or no longer exists.", path);
             }
         }
 

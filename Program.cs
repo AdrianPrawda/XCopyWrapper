@@ -1,43 +1,51 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.IO.Pipes;
-using System.Reflection;
 using XCopyWrapper;
 
 const string ROOT_FOLDER = "root\\";
 const string IPC_ID = "XCopyWrapperIPC";
+const string MUTEX_ID = "XCopyWrapperMutex";
 
 BlockingCollection<string> copyQueue = new();
-string rootFolder = Path.Join(Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location), ROOT_FOLDER);
+string rootFolder = Path.Join(AppContext.BaseDirectory, ROOT_FOLDER);
 
-if (Process.GetProcessesByName(Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly()?.Location)).Length > 1)
+Mutex mutext = new(false, MUTEX_ID);
+try
 {
-#if DEBUG
-    Console.WriteLine("[DEBUG] Running as child process");
-#endif
-    RunIPCClient();
-
-#if DEBUG
-    WriteBlockingLine();
-#endif
-}
-else
-{
-#if DEBUG
-    Console.WriteLine("[DEBUG] Running as parent process");
-#endif
-    Console.WriteLine("\x1b[35m\x1b[1m[INFO]\x1b[0m Workspace: {0}", rootFolder);
-
-    if(args.Length > 0)
+    if (mutext.WaitOne(0, false))
     {
-        foreach(string path in args)
-        {
-            copyQueue.Add(path);
-        }
-    }
+#if DEBUG
+        Console.WriteLine("[DEBUG] Running as parent process");
+#endif
+        AnsiConsole.WriteLine("\x1b[35;1m[INFO]\x1b[0m Workspace: {0}", rootFolder);
 
-    RunXCopyServer(copyQueue, rootFolder);
-    await RunIPCServer();
+        if (args.Length > 0)
+        {
+            foreach (string path in args)
+            {
+                copyQueue.Add(path);
+            }
+        }
+
+        RunXCopyServer(copyQueue, rootFolder);
+        await RunIPCServer();
+        mutext.ReleaseMutex();
+    }
+    else
+    {
+#if DEBUG
+        Console.WriteLine("[DEBUG] Running as child process");
+#endif
+        RunIPCClient();
+
+#if DEBUG
+        WriteBlockingLine();
+#endif
+    }
+}
+finally
+{
+    mutext.Close();
 }
 
 void RunIPCClient()
